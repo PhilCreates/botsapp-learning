@@ -1,5 +1,7 @@
 import streamlit as st
 
+st.set_page_config(page_title="WhatsApp-Style Mobile Chat", layout="wide")
+
 # ───────────────────────────────────
 # User login at the top
 # ───────────────────────────────────
@@ -8,18 +10,21 @@ with st.sidebar:
     username = st.text_input("Username", key="login_username")
     password = st.text_input("Password", type="password", key="login_password")
     login_btn = st.button("Login", key="login_btn")
+    # Retrieve valid users from Streamlit secrets
+    valid_users = st.secrets.get("users", {})
     if login_btn:
         if username and password:
-            st.session_state["logged_in_user"] = username
-            st.success(f"Logged in as {username}")
+            if username in valid_users and valid_users[username] == password:
+                st.session_state["logged_in_user"] = username
+                st.success(f"Logged in as {username}")
+            else:
+                st.error("Invalid username or password.")
         else:
             st.error("Please enter both username and password.")
 
 # Optionally, block access to chat if not logged in
 if "logged_in_user" not in st.session_state:
     st.stop()
-
-st.set_page_config(page_title="WhatsApp-Style Mobile Chat", layout="wide")
 
 # ───────────────────────────────────
 # Session-state initialisation
@@ -68,11 +73,13 @@ st.markdown(
 # ───────────────────────────────────
 if st.session_state.view == "chat_list":
     st.title("💬 Chats")
+    import hashlib
     for name, msgs in st.session_state.history.items():
         icon    = "👥" if name == "Work Group" else "🙂"
         preview = msgs[-1]["content"] if msgs else "No messages yet"
         label   = f"{icon} **{name}**  \n{preview}"  # two-line Markdown label
-        if st.button(label, use_container_width=True, key=f"btn_{name}"):
+        safe_key = f"btn_{hashlib.md5(name.encode()).hexdigest()}"
+        if st.button(label, use_container_width=True, key=safe_key):
             switch_to_conversation(name)
 
 # ───────────────────────────────────
@@ -94,8 +101,20 @@ else:
     def submit_message():
         txt = st.session_state["chat_input"]
         st.session_state.history[st.session_state.current_chat] += [
-            {"role": "user",      "content": txt,          "avatar": "🙂"},
-            {"role": "assistant", "content": f"Echo: {txt}", "avatar": "🤖"},
+            {
+                "role": "user",
+                "content": txt,
+                "avatar": "🙂"
+            },
+            {
+                "role": "assistant",
+                "content": f"Echo: {txt}",
+                "avatar": "🤖"
+            },
         ]
 
-    st.chat_input("Type a message…", key="chat_input", on_submit=submit_message)
+    st.chat_input(
+        "Type a message…",
+        key=f"chat_input_{st.session_state.current_chat}",
+        on_submit=submit_message
+    )
