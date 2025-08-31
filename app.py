@@ -1,3 +1,5 @@
+
+import hashlib
 import streamlit as st
 
 st.set_page_config(page_title="WhatsApp-Style Mobile Chat", layout="wide")
@@ -43,6 +45,8 @@ if "view" not in st.session_state:
 # ───────────────────────────────────
 # Helper – switch view
 # ───────────────────────────────────
+
+
 def switch_to_conversation(chat_name: str):
     st.session_state.current_chat = chat_name
     st.session_state.view = "conversation"
@@ -51,17 +55,19 @@ def switch_to_conversation(chat_name: str):
 # ───────────────────────────────────
 #  CSS patch  →  FULL left alignment
 # ───────────────────────────────────
+
+
 st.markdown(
     """
     <style>
       /* works for every st.button rendered below */
       div.stButton > button {
-          text-align: left !important;        /* left-justify text            */
-          display:  flex !important;          /* turn wrapper into flexbox    */
-          flex-direction: column !important;  /* stack multiple label lines   */
-          align-items: flex-start !important; /* hug the left edge            */
+          text-align: left !important;        /* left-justify text */
+          display: flex !important;           /* turn wrapper into flexbox */
+          flex-direction: column !important;  /* stack multiple label lines */
+          align-items: flex-start !important; /* hug the left edge */
           justify-content: flex-start !important;
-          white-space: normal !important;     /* allow Markdown line breaks   */
+          white-space: normal !important;     /* allow Markdown line breaks */
       }
     </style>
     """,
@@ -73,11 +79,16 @@ st.markdown(
 # ───────────────────────────────────
 if st.session_state.view == "chat_list":
     st.title("💬 Chats")
-    import hashlib
+    GROUP_ICON = "👥"
+    USER_ICON = "🙂"
     for name, msgs in st.session_state.history.items():
-        icon    = "👥" if name == "Work Group" else "🙂"
+        # Choose icon based on chat name
+        icon = GROUP_ICON if name == "Work Group" else USER_ICON
+        # Show last message or placeholder
         preview = msgs[-1]["content"] if msgs else "No messages yet"
-        label   = f"{icon} **{name}**  \n{preview}"  # two-line Markdown label
+        # Markdown label: icon, name, preview
+        label = f"{icon} **{name}**  \n{preview}"
+        # Safe key for button
         safe_key = f"btn_{hashlib.md5(name.encode()).hexdigest()}"
         if st.button(label, use_container_width=True, key=safe_key):
             switch_to_conversation(name)
