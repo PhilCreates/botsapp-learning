@@ -48,6 +48,7 @@ if "view" not in st.session_state:
 
 
 def switch_to_conversation(chat_name: str):
+    """Switches the view to the selected conversation and reruns the app."""
     st.session_state.current_chat = chat_name
     st.session_state.view = "conversation"
     st.rerun()
@@ -110,6 +111,7 @@ else:
             st.write(msg["content"])
 
     def submit_message():
+        """Handles user message submission and appends user/assistant messages to chat history."""
         txt = st.session_state["chat_input"]
         st.session_state.history[st.session_state.current_chat] += [
             {
